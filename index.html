@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Stopwatch Duo</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --panel-bg: #16213e;
+            --accent-left: #4ecdc4; /* бирюзовый */
+            --accent-right: #ff6b6b; /* красный */
+            --text-main: #ffffff;
+            --text-dim: #aab;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden; /* Чтобы не было скролла страницы */
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            z-index: 10;
+            position: relative;
+        }
+
+        h1 {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            letter-spacing: 1px;
+        }
+
+        /* ГЛАВНЫЙ КОНТЕЙНЕР: СЛЕВА И СПРАВА */
+        .dual-container {
+            display: flex;
+            width: 100%;
+            height: calc(100% - 60px); /* минус шапка */
+            gap: 4px; /* Тонкая полоска между ними */
+        }
+
+        /* Адаптив: на узких экранах (портрет) ставим друг под другом */
+        @media (max-width: 600px) {
+            .dual-container {
+                flex-direction: column;
+            }
+        }
+
+        .stopwatch-panel {
+            flex: 1; /* Занимают по 50% ширины */
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 0; /* Важно для скролла внутри */
+        }
+
+        /* Разделитель посередине */
+        .separator {
+            width: 4px;
+            background: rgba(255,255,255,0.2);
+            height: 100%;
+        }
+
+        .time-display {
+            font-size: clamp(2.5rem, 20vw, 5rem); /* Растёт с экраном */
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 10px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .lap-info {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 1.2em;
+        }
+        .lap-info.active { color: #ffe66d; } /* Жёлтый, когда идёт круг */
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        button:active { transform: scale(0.95); }
+
+        /* Цвета кнопок */
+        .btn-start-stop { background: #2a2a4e; color: white; }
+        .btn-start-stop.running { background: var(--accent-left); color: black; } /* Для левого */
+        .btn-lap { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-reset { background: #333; color: #aaa; }
+
+        /* Список кругов */
+        .laps-list {
+            width: 100%;
+            max-height: 140px;
+            overflow-y: auto;
+            margin-top: 10px;
+            flex-shrink: 0;
+        }
+        
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .lap-num { color: var(--text-dim); }
+        .lap-diff { color: var(--accent-left); font-weight: bold; }
+        .lap-total { color: #666; font-size: 0.75rem; }
+
+        /* Скроллбар */
+        .laps-list::-webkit-scrollbar { width: 6px; }
+        .laps-list::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Stopwatch Duo</h1>
+    </header>
+
+    <div class="dual-container">
+        <!-- ЛЕВЫЙ СЕКУНДОМЕР -->
+        <div class="stopwatch-panel" style="border-right: 1px solid rgba(255,255,255,0.1);">
+            <div class="time-display" id="time1">00:00.00</div>
+            <div class="lap-info" id="lapInfo1">Старт для отсчёта</div>
+            
+            <div class="controls">
+                <button class="btn-start-stop" id="btnStart1" onclick="toggleTimer(1)">СТАРТ</button>
+                <button class="btn-lap" id="btnLap1" onclick="recordLap(1)" disabled>КРУГ</button>
+                <button class="btn-reset" onclick="resetTimer(1)">СБРОС</button>
+            </div>
+
+            <div class="laps-list" id="laps1"></div>
+        </div>
+
+        <!-- ПРАВЫЙ СЕКУНДОМЕР -->
+        <div class="stopwatch-panel">
+            <div class="time-display" id="time2">00:00.00</div>
+            <div class="lap-info" id="lapInfo2">Старт для отсчёта</div>
+
+            <div class="controls">
+                <button class="btn-start-stop" id="btnStart2" onclick="toggleTimer(2)">СТАРТ</button>
+                <button class="btn-lap" id="btnLap2" onclick="recordLap(2)" disabled>КРУГ</button>
+                <button class="btn-reset" onclick="resetTimer(2)">СБРОС</button>
+            </div>
+
+            <div class="laps-list" id="laps2"></div>
+        </div>
+    </div>
+
+<script>
+    // Хранилище данных для двух таймеров
+    const timers = {
+        1: { running: false, elapsed: 0, startTime: 0, laps: [], lastLapTime: 0 },
+        2: { running: false, elapsed: 0, startTime: 0, laps: [], lastLapTime: 0 }
+    };
+
+    function formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+        const centis = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+        return `${minutes}:${seconds}.${centis}`;
+    }
+
+    function updateTimer(id) {
+        const t = timers[id];
+        const displayEl = document.getElementById(`time${id}`);
+        const infoEl = document.getElementById(`lapInfo${id}`);
+
+        let currentMs = t.elapsed;
+        if (t.running) {
+            currentMs += performance.now() - t.startTime;
+        }
+
+        // Обновляем цифры
+        displayEl.textContent = formatTime(currentMs);
+
+        // Обновляем инфо о текущем круге
+        if (t.laps.length > 0) {
+            const lastLapTotal = t.laps[t.laps.length - 1].totalAtPress;
+            const currentLapDiff = currentMs - lastLapTotal;
+            infoEl.textContent = `Круг: ${formatTime(currentLapDiff)}`;
+            infoEl.classList.add('active');
+        } else if (t.running || t.elapsed > 0) {
+            infoEl.textContent = `Общее: ${formatTime(currentMs)}`;
+            infoEl.classList.remove('active');
+        } else {
+            infoEl.textContent = 'Старт для отсчёта';
+            infoEl.classList.remove('active');
+        }
+
+        // Запускаем следующий кадр, если бежит
+        if (t.running) {
+            requestAnimationFrame(() => updateTimer(id));
+        }
+    }
+
+    function toggleTimer(id) {
+        const t = timers[id];
+        const btn = document.getElementById(`btnStart${id}`);
+        const lapBtn = document.getElementById(`btnLap${id}`);
+
+        if (!t.running) {
+            // СТАРТ
+            t.running = true;
+            t.startTime = performance.now();
+            btn.textContent = "СТОП";
+            btn.classList.add('running');
+            lapBtn.disabled = false;
+            updateTimer(id);
+        } else {
+            // СТОП
+            t.running = false;
+            t.elapsed += performance.now() - t.startTime;
+            btn.textContent = "СТАРТ";
+            btn.classList.remove('running');
+            lapBtn.disabled = true;
+            // Финальный апдейт, чтобы цифры застыли точно
+            updateTimer(id); 
+        }
+    }
+
+    function recordLap(id) {
+        const t = timers[id];
+        if (!t.running && t.elapsed === 0) return;
+
+        const now = t.running ? t.elapsed + (performance.now() - t.startTime) : t.elapsed;
+        const diff = now - t.lastLapTime;
+
+        t.laps.push({
+            num: t.laps.length + 1,
+            diff: diff,
+            totalAtPress: now
+        });
+        t.lastLapTime = now;
+
+        renderLaps(id);
+    }
+
+    function renderLaps(id) {
+        const listEl = document.getElementById(`laps${id}`);
+        listEl.innerHTML = '';
+        // Показываем последние 5 кругов
+        const recent = timers[id].laps.slice(-5).reverse();
+        recent.forEach(lap => {
+            const div = document.createElement('div');
+            div.className = 'lap-item';
+            div.innerHTML = `
+                <span class="lap-num">#${lap.num}</span>
+                <span class="lap-diff">${formatTime(lap.diff)}</span>
+                <span class="lap-total">${formatTime(lap.totalAtPress)}</span>
+            `;
+            listEl.appendChild(div);
+        });
+    }
+
+    function resetTimer(id) {
+        const t = timers[id];
+        t.running = false;
+        t.elapsed = 0;
+        t.laps = [];
+        t.lastLapTime = 0;
+
+        document.getElementById(`time${id}`).textContent = '00:00.00';
+        document.getElementById(`lapInfo${id}`).textContent = 'Старт для отсчёта';
+        document.getElementById(`laps${id}`).innerHTML = '';
+
+        const btn = document.getElementById(`btnStart${id}`);
+        btn.textContent = 'СТАРТ';
+        btn.classList.remove('running');
+        document.getElementById(`btnLap${id}`).disabled = true;
+    }
+</script>
+</body>
+</html>
