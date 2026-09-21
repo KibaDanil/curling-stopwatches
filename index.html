@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-     <!-- ========== FAVICON ========== -->
+    <!-- ========== FAVICON ========== -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -13,212 +13,293 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Curling Stopwatch Duo</title>
-
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
     
     <style>
         :root {
-            --bg-color: #ffffff;
-            --panel-bg: #f5f5f7;
-            --accent-blue: #2c6edd; /* Синий цвет для керлинга */
-            --accent-red: #d32f2f;  /* Красный цвет для керлинга */
-            --text-main: #000000;
-            --text-dim: #666666;
-            --border-color: #e0e0e0;
+            --bg-color: #f0f4f8;
+            --accent-blue: #1565c0; /* Глубокий синий */
+            --accent-red: #c62828;  /* Глубокий красный */
+            --text-main: #1a1a1a;
+            --text-dim: #546e7a;
+            --border-color: #cfd8dc;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            height: 100vh;
+            min-height: 100vh;
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            overflow: hidden;
+            overflow-y: auto; /* Разрешаем вертикальную прокрутку */
             display: flex;
             flex-direction: column;
         }
 
         header {
             text-align: center;
-            padding: 15px 10px;
+            padding: 15px 20px;
+            background: white;
             border-bottom: 1px solid var(--border-color);
-            z-index: 10;
-            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         h1 {
-            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
             letter-spacing: 1px;
-            font-weight: 600;
+            font-weight: 700;
+            color: var(--text-main);
         }
+
+        .share-header-btn {
+            background: linear-gradient(135deg, var(--accent-blue), #42a5f5);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3);
+            transition: transform 0.1s;
+        }
+        .share-header-btn:active { transform: scale(0.95); }
 
         /* ГЛАВНЫЙ КОНТЕЙНЕР */
         .dual-container {
             display: flex;
             width: 100%;
-            height: calc(100% - 65px);
-            gap: 10px;
-            padding: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 15px;
+            flex: 1;
         }
 
         @media (max-width: 600px) {
             .dual-container {
                 flex-direction: column;
+                padding: 15px;
             }
         }
 
         .stopwatch-panel {
             flex: 1;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 25px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            min-height: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
+
+        /* Декоративный элемент в стиле камня для керлинга */
+        .stopwatch-panel::before {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            opacity: 0.08;
+            top: 15px;
+            right: 15px;
+        }
+
+        .stopwatch-panel.out {
+            background: linear-gradient(180deg, #e3f2fd 0%, #ffffff 100%);
+            border-top: 5px solid var(--accent-blue);
+        }
+        .stopwatch-panel.out::before { background: var(--accent-blue); }
+
+        .stopwatch-panel.in {
+            background: linear-gradient(180deg, #ffebee 0%, #ffffff 100%);
+            border-top: 5px solid var(--accent-red);
+        }
+        .stopwatch-panel.in::before { background: var(--accent-red); }
 
         .panel-label {
             position: absolute;
-            top: 10px;
-            left: 15px;
-            font-weight: bold;
+            top: 15px;
+            left: 20px;
+            font-weight: 800;
             text-transform: uppercase;
-            font-size: 0.8rem;
-            color: var(--text-dim);
+            font-size: 1rem;
+            letter-spacing: 1px;
         }
-        .label-out { color: var(--accent-blue); }
-        .label-in { color: var(--accent-red); }
+        .out .panel-label { color: var(--accent-blue); }
+        .in .panel-label { color: var(--accent-red); }
 
         .time-display {
-            font-size: clamp(2.5rem, 20vw, 5rem);
-            font-weight: 700;
+            font-size: clamp(3rem, 15vw, 5rem);
+            font-weight: 800;
             font-variant-numeric: tabular-nums;
-            margin-bottom: 10px;
+            margin: 15px 0;
             line-height: 1;
         }
+        .out .time-display { color: var(--accent-blue); }
+        .in .time-display { color: var(--accent-red); }
 
-        .lap-info {
-            font-size: 0.9rem;
+        .status-info {
+            font-size: 0.95rem;
             color: var(--text-dim);
             margin-bottom: 20px;
             text-align: center;
             min-height: 1.2em;
+            font-weight: 500;
         }
-        .lap-info.active { color: #ff8f00; }
 
         .controls {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 10px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
 
         button {
-            padding: 12px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s;
             touch-action: manipulation;
             user-select: none;
+            font-size: 0.95rem;
         }
         button:active { transform: scale(0.95); }
 
-        .btn-start-stop { background: #e0e0e0; color: #000; }
-        .btn-start-stop.running { 
+        .btn-start-stop { 
+            background: #e0e0e0; 
+            color: #333; 
+            min-width: 120px;
+        }
+        .out .btn-start-stop.running { 
             background: var(--accent-blue); 
             color: white; 
+            box-shadow: 0 4px 12px rgba(21, 101, 192, 0.4);
         }
-        .btn-lap { background: rgba(0,0,0,0.05); color: #333; border: 1px solid #ccc; }
-        .btn-reset { background: transparent; color: #999; border: 1px dashed #999; }
+        .in .btn-start-stop.running { 
+            background: var(--accent-red); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(198, 40, 40, 0.4);
+        }
         
-        /* Кнопки сохранения и очистки */
-        .global-controls {
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid var(--border-color);
-            width: 100%;
+        .btn-reset { 
+            background: transparent; 
+            color: #777; 
+            border: 1px solid #bbb; 
         }
+        .btn-reset:hover { background: rgba(0,0,0,0.03); }
+        
+        /* ГЛОБАЛЬНЫЕ КОНТРОЛЫ */
+        .global-controls {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
         .save-btn {
             background: white;
             border: 2px solid var(--accent-blue);
             color: var(--accent-blue);
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
             font-weight: bold;
+            flex: 1;
+            min-width: 140px;
+            max-width: 250px;
         }
+        .save-btn:hover { background: #e3f2fd; }
+
         .clear-btn {
             background: white;
             border: 2px solid var(--accent-red);
             color: var(--accent-red);
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
             font-weight: bold;
+            flex: 1;
+            min-width: 140px;
+            max-width: 250px;
+        }
+        .clear-btn:hover { background: #ffebee; }
+
+        /* СПИСОК СОХРАНЁННЫХ ВРЕМЕН */
+        .saved-section {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px 30px;
+        }
+        
+        .saved-section h3 {
+            text-align: center;
+            color: var(--text-main);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
         }
 
         .saved-list {
             width: 100%;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
-            margin-top: 20px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 10px;
+            background: white;
         }
+        
         .saved-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 10px;
-            margin-bottom: 6px;
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .saved-time { font-size: 1.1rem; font-weight: bold; }
-        .saved-side { font-size: 0.85rem; color: var(--text-dim); }
-
-        .laps-list {
-            width: 100%;
-            max-height: 140px;
-            overflow-y: auto;
-            margin-top: 10px;
-            flex-shrink: 0;
-        }
-        
-        .lap-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 10px;
-            margin-bottom: 4px;
-            background: rgba(255,255,255,0.6);
-            border-radius: 6px;
-            font-size: 0.85rem;
-        }
-        .lap-num { color: var(--text-dim); }
-        .lap-diff { color: var(--accent-blue); font-weight: bold; }
-        .lap-total { color: #666; font-size: 0.75rem; }
-
-        .share-app-btn {
-            margin-top: 15px;
-            padding: 12px 30px;
-            background: #333;
-            color: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #fafafa;
             border-radius: 8px;
-            font-weight: bold;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
+            border-left: 4px solid var(--accent-blue);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .saved-item:last-child { margin-bottom: 0; }
+        
+        .saved-time { font-size: 1.1rem; font-weight: bold; }
+        .saved-side { font-size: 0.85rem; color: var(--text-dim); margin-left: 10px; }
+        
+        .delete-btn {
+            background: transparent !important;
+            border: none !important;
+            color: #999 !important;
+            cursor: pointer;
+            font-size: 1.4rem;
+            padding: 0 8px !important;
+            min-width: auto !important;
+        }
+        .delete-btn:hover { color: var(--accent-red) !important; }
+
+        /* Адаптив для маленьких экранов */
+        @media (max-width: 400px) {
+            .saved-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .saved-side { margin-left: 0; }
         }
     </style>
 </head>
@@ -226,63 +307,54 @@
 
     <header>
         <h1>Curling Stopwatch</h1>
+        <button class="share-header-btn" onclick="shareApp()">🔗 Поделиться</button>
     </header>
     
     <div class="dual-container">
         <!-- ЛЕВЫЙ СЕКУНДОМЕР (OUT) -->
-        <div class="stopwatch-panel">
-            <div class="panel-label label-out">OUT</div>
+        <div class="stopwatch-panel out">
+            <div class="panel-label">OUT</div>
             <div class="time-display" id="time1">00:00.00</div>
-            <div class="lap-info" id="lapInfo1">Старт для отсчёта</div>
+            <div class="status-info" id="status1">Готов к старту</div>
             
             <div class="controls">
                 <button class="btn-start-stop" id="btnStart1" onclick="toggleTimer(1)">СТАРТ</button>
-                <button class="btn-lap" id="btnLap1" onclick="recordLap(1)" disabled>КРУГ</button>
                 <button class="btn-reset" onclick="resetTimer(1)">СБРОС</button>
             </div>
-            <div class="laps-list" id="laps1"></div>
         </div>
 
         <!-- ПРАВЫЙ СЕКУНДОМЕР (IN) -->
-        <div class="stopwatch-panel">
-            <div class="panel-label label-in">IN</div>
+        <div class="stopwatch-panel in">
+            <div class="panel-label">IN</div>
             <div class="time-display" id="time2">00:00.00</div>
-            <div class="lap-info" id="lapInfo2">Старт для отсчёта</div>
+            <div class="status-info" id="status2">Готов к старту</div>
 
             <div class="controls">
                 <button class="btn-start-stop" id="btnStart2" onclick="toggleTimer(2)">СТАРТ</button>
-                <button class="btn-lap" id="btnLap2" onclick="recordLap(2)" disabled>КРУГ</button>
                 <button class="btn-reset" onclick="resetTimer(2)">СБРОС</button>
             </div>
-
-            <div class="laps-list" id="laps2"></div>
         </div>
     </div>
 
     <!-- ГЛОБАЛЬНЫЕ КОНТРОЛЫ: СОХРАНЕНИЕ И ОЧИСТКА -->
     <div class="global-controls">
-        <button class="save-btn" onclick="saveCurrentTimes()">Сохранить время</button>
-        <button class="clear-btn" onclick="clearSavedTimes()">Очистить сохранённые</button>
+        <button class="save-btn" onclick="saveCurrentTimes()">💾 Сохранить время</button>
+        <button class="clear-btn" onclick="clearSavedTimes()">🗑️ Очистить всё</button>
     </div>
 
     <!-- СПИСОК СОХРАНЁННЫХ ВРЕМЕН -->
-    <div style="padding: 20px;">
+    <div class="saved-section">
         <h3>Сохранённые результаты</h3>
         <div class="saved-list" id="savedList">
-            <p style="color: #999; text-align: center;">Здесь появятся сохранённые времена</p>
+            <p style="color: #999; text-align: center; padding: 20px;">Здесь появятся сохранённые времена</p>
         </div>
-    </div>
-
-    <!-- КНОПКА ПОДЕЛИТЬСЯ ПРИЛОЖЕНИЕМ -->
-    <div style="text-align: center; padding: 15px;">
-        <a href="#" class="share-app-btn" onclick="shareApp()">Поделиться приложением</a>
     </div>
 
 <script>
     // Хранилище данных для двух таймеров
     const timers = {
-        1: { running: false, elapsed: 0, startTime: 0, laps: [], lastLapTime: 0 },
-        2: { running: false, elapsed: 0, startTime: 0, laps: [], lastLapTime: 0 }
+        1: { running: false, elapsed: 0, startTime: 0 },
+        2: { running: false, elapsed: 0, startTime: 0 }
     };
 
     // Хранилище сохранённых времен
@@ -299,7 +371,7 @@
     function updateTimer(id) {
         const t = timers[id];
         const displayEl = document.getElementById(`time${id}`);
-        const infoEl = document.getElementById(`lapInfo${id}`);
+        const statusEl = document.getElementById(`status${id}`);
 
         let currentMs = t.elapsed;
         if (t.running) {
@@ -308,120 +380,86 @@
 
         displayEl.textContent = formatTime(currentMs);
 
-        if (t.laps.length > 0) {
-            const lastLapTotal = t.laps[t.laps.length - 1].totalAtPress;
-            const currentLapDiff = currentMs - lastLapTotal;
-            infoEl.textContent = `Круг: ${formatTime(currentLapDiff)}`;
-            infoEl.classList.add('active');
-        } else if (t.running || t.elapsed > 0) {
-            infoEl.textContent = `Общее: ${formatTime(currentMs)}`;
-            infoEl.classList.remove('active');
-        } else {
-            infoEl.textContent = 'Старт для отсчёта';
-            infoEl.classList.remove('active');
-        }
-
         if (t.running) {
+            statusEl.textContent = 'Идет замер...';
+            statusEl.style.color = id === 1 ? 'var(--accent-blue)' : 'var(--accent-red)';
             requestAnimationFrame(() => updateTimer(id));
+        } else if (t.elapsed > 0) {
+            statusEl.textContent = 'Замер остановлен';
+            statusEl.style.color = 'var(--text-dim)';
+        } else {
+            statusEl.textContent = 'Готов к старту';
+            statusEl.style.color = 'var(--text-dim)';
         }
     }
 
     function toggleTimer(id) {
         const t = timers[id];
         const btn = document.getElementById(`btnStart${id}`);
-        const lapBtn = document.getElementById(`btnLap${id}`);
 
         if (!t.running) {
             t.running = true;
             t.startTime = performance.now();
             btn.textContent = "СТОП";
             btn.classList.add('running');
-            lapBtn.disabled = false;
             updateTimer(id);
         } else {
             t.running = false;
             t.elapsed += performance.now() - t.startTime;
             btn.textContent = "СТАРТ";
             btn.classList.remove('running');
-            lapBtn.disabled = true;
             updateTimer(id); 
         }
-    }
-
-    function recordLap(id) {
-        const t = timers[id];
-        if (!t.running && t.elapsed === 0) return;
-
-        const now = t.running ? t.elapsed + (performance.now() - t.startTime) : t.elapsed;
-        const diff = now - t.lastLapTime;
-
-        t.laps.push({
-            num: t.laps.length + 1,
-            diff: diff,
-            totalAtPress: now
-        });
-        t.lastLapTime = now;
-
-        renderLaps(id);
-    }
-
-    function renderLaps(id) {
-        const listEl = document.getElementById(`laps${id}`);
-        listEl.innerHTML = '';
-        const recent = timers[id].laps.slice(-5).reverse();
-        recent.forEach(lap => {
-            const div = document.createElement('div');
-            div.className = 'lap-item';
-            div.innerHTML = `
-                <span class="lap-num">#${lap.num}</span>
-                <span class="lap-diff">${formatTime(lap.diff)}</span>
-                <span class="lap-total">${formatTime(lap.totalAtPress)}</span>
-            `;
-            listEl.appendChild(div);
-        });
     }
 
     function resetTimer(id) {
         const t = timers[id];
         t.running = false;
         t.elapsed = 0;
-        t.laps = [];
-        t.lastLapTime = 0;
 
         document.getElementById(`time${id}`).textContent = '00:00.00';
-        document.getElementById(`lapInfo${id}`).textContent = 'Старт для отсчёта';
-        document.getElementById(`laps${id}`).innerHTML = '';
+        const statusEl = document.getElementById(`status${id}`);
+        statusEl.textContent = 'Готов к старту';
+        statusEl.style.color = 'var(--text-dim)';
 
         const btn = document.getElementById(`btnStart${id}`);
         btn.textContent = 'СТАРТ';
         btn.classList.remove('running');
-        document.getElementById(`btnLap${id}`).disabled = true;
     }
 
-    // --- НОВЫЕ ФУНКЦИИ ---
+    // --- ФУНКЦИИ СОХРАНЕНИЯ (ОБНОВЛЕННЫЕ) ---
 
     function saveCurrentTimes() {
         const time1 = timers[1].elapsed;
         const time2 = timers[2].elapsed;
 
-        // Сохраняем только если есть что сохранять (хотя бы один таймер работал)
+        // Если оба таймера на нуле, сохранять нечего
         if (time1 === 0 && time2 === 0) {
             alert("Сначала засеките время!");
             return;
         }
 
-        savedTimes.push({
-            time1: time1,
-            time2: time2,
-            timestamp: new Date().toLocaleTimeString()
-        });
-                renderSavedTimes();
+        // Создаем объект записи, в который добавим только ненулевые значения
+        const savedEntry = {
+            timestamp: new Date().toLocaleTimeString(),
+            entries: []
+        };
+
+        if (time1 > 0) {
+            savedEntry.entries.push({ side: 'OUT', time: time1, color: 'var(--accent-blue)' });
+        }
+        if (time2 > 0) {
+            savedEntry.entries.push({ side: 'IN', time: time2, color: 'var(--accent-red)' });
+        }
+
+        savedTimes.push(savedEntry);
+        renderSavedTimes();
     }
 
     function renderSavedTimes() {
         const listEl = document.getElementById('savedList');
         if (savedTimes.length === 0) {
-            listEl.innerHTML = '<p style="color: #999; text-align: center;">Здесь появятся сохранённые времена</p>';
+            listEl.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Здесь появятся сохранённые времена</p>';
             return;
         }
 
@@ -431,14 +469,19 @@
             const realIdx = savedTimes.length - 1 - idx;
             const div = document.createElement('div');
             div.className = 'saved-item';
+            div.style.borderLeftColor = realIdx % 2 === 0 ? 'var(--accent-blue)' : 'var(--accent-red)';
+            
+            // Формируем строки времени динамически (только для ненулевых)
+            const timeStrings = saved.entries.map(entry => 
+                `<span class="saved-time" style="color: ${entry.color};">${entry.side} ${formatTime(entry.time)}</span>`
+            ).join('<span style="color: #ccc; margin: 0 8px;">|</span>');
+
             div.innerHTML = `
-                <div>
-                    <span class="saved-time" style="color: var(--accent-blue);">OUT ${formatTime(saved.time1)}</span>
-                    <span style="margin: 0 8px; color: #ccc;">|</span>
-                    <span class="saved-time" style="color: var(--accent-red);">IN ${formatTime(saved.time2)}</span>
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap: 8px;">
+                    ${timeStrings}
+                    <span class="saved-side">${saved.timestamp}</span>
                 </div>
-                <span class="saved-side">${saved.timestamp}</span>
-                <button onclick="deleteSavedTime(${realIdx})" style="background:transparent;border:none;color:#999;cursor:pointer;font-size:1.2rem;padding:4px 8px;">×</button>
+                <button class="delete-btn" onclick="deleteSavedTime(${realIdx})" title="Удалить">×</button>
             `;
             listEl.appendChild(div);
         });
@@ -470,11 +513,9 @@
         if (navigator.share) {
             navigator.share(shareData).catch(err => console.log('Share cancelled:', err));
         } else {
-            // Fallback: копируем ссылку в буфер обмена
             navigator.clipboard.writeText(window.location.href).then(() => {
                 alert("Ссылка на приложение скопирована в буфер обмена!");
             }).catch(() => {
-                // Если буфер обмена недоступен — показываем ссылку
                 prompt("Скопируйте ссылку и поделитесь:", window.location.href);
             });
         }
